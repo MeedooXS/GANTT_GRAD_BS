@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BLACK SWAN | Project Tracker & Gantt Chart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --surface-hover: #1e293b;
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --accent: #6366f1;
+      --done: #10b981;
+      --partial: #f59e0b;
+      --verify: #8b5cf6;
+      --planned: #64748b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .container { max-width: 1500px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(30, 41, 59, 0.7));
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .brand h1 { font-size: 26px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+    .brand h1 span { background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .meta-badges { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .badge { font-size: 12px; font-family: 'JetBrains Mono', monospace; padding: 4px 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); }
+    .badge strong { color: var(--text); }
+    .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Buttons */
+    .btn { font-family: inherit; font-weight: 600; font-size: 13px; padding: 9px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
+    .btn-primary { background: #0284c7; color: #fff; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text); border-color: var(--card-border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+
+    /* Team Cards */
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .team-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .team-card-title { font-size: 15px; font-weight: 700; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+    .team-card-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--primary); }
+    .team-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .tag { font-size: 11px; background: rgba(255,255,255,0.04); padding: 3px 8px; border-radius: 4px; color: var(--text-muted); }
+
+    /* KPI Summary - Now Clickable */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px 20px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; }
+    .kpi-card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.2); background: var(--surface-hover); }
+    .kpi-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-value { font-size: 24px; font-weight: 800; margin-top: 6px; }
+    .kpi-hint { position: absolute; top: 16px; right: 20px; font-size: 10px; color: rgba(255,255,255,0.2); opacity: 0; transition: opacity 0.2s; }
+    .kpi-card:hover .kpi-hint { opacity: 1; }
+
+    /* Filters Bar */
+    .toolbar { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 20px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .filter-group { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    select, input[type="text"], input[type="number"], textarea.modal-input {
+      background: #0f172a; border: 1px solid var(--card-border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; transition: border 0.2s;
+    }
+    textarea.modal-input { width: 100%; resize: vertical; min-height: 70px; }
+    select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea.modal-input:focus { border-color: var(--primary); }
+
+    /* Gantt & Table Wrapper */
+    .view-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .view-header { padding: 18px 24px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+    .view-header h2 { font-size: 18px; font-weight: 700; }
+    .legend { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; display:flex; gap:16px; }
+
+    /* Sortable Headers */
+    .sortable { cursor: pointer; user-select: none; transition: color 0.2s; display: inline-flex; align-items: center; }
+    .sortable:hover { color: var(--text); }
+    .sort-icon { display: inline-block; width: 14px; margin-left: 4px; font-size: 14px; font-family: sans-serif; color: var(--primary); }
+
+    /* Gantt Visual Grid */
+    .gantt-container { overflow-x: auto; padding: 20px; }
+    .gantt-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; min-width: 1200px; table-layout: fixed; }
+    .gantt-table th { font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; color: var(--text-muted); padding: 8px 6px; text-align: left; vertical-align: bottom; }
+    .gantt-table th.week-col { text-align: center; width: 6.5%; }
+    
+    .gantt-row { background: rgba(255, 255, 255, 0.02); transition: background 0.15s; }
+    .gantt-row:hover { background: var(--surface-hover); }
+    .gantt-row td { padding: 10px 8px; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); position: relative; }
+    .gantt-row td:first-child { border-left: 1px solid rgba(255,255,255,0.04); border-radius: 8px 0 0 8px; padding-left: 16px; }
+    .gantt-row td:last-child { border-right: 1px solid rgba(255,255,255,0.04); border-radius: 0 8px 8px 0; padding-right: 16px; }
+
+    /* Editable Fields & Priorities */
+    .editable-cell { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 4px; border-radius: 4px; transition: background 0.2s; border: 1px solid transparent; min-height: 32px; }
+    .editable-text { cursor: pointer; border-bottom: 1px dashed transparent; transition: border 0.2s; }
+    .editable-text:hover { border-bottom: 1px dashed var(--text-muted); color: var(--primary); }
+    .inline-input { width: 100%; padding: 4px; background: #0b0f17; color: #fff; border: 1px solid var(--primary); border-radius: 4px; font-family: inherit; font-size: inherit; }
+
+    .priority-badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; user-select: none; }
+    .p-high { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .p-medium { background: rgba(245, 158, 11, 0.15); color: var(--partial); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .p-low { background: rgba(56, 189, 248, 0.15); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.3); }
+
+    .note-icon { cursor: help; font-size: 14px; user-select: none; transition: transform 0.2s; }
+    .note-icon:hover { transform: scale(1.2); }
+
+    /* Global Tooltip */
+    .custom-tooltip { position: fixed; background: #1e293b; color: #e2e8f0; padding: 10px 14px; border-radius: 8px; font-size: 12px; max-width: 280px; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.2s; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.6); white-space: pre-wrap; word-wrap: break-word; line-height: 1.5; }
+    .custom-tooltip.show { opacity: 1; }
+
+    /* Status Pills */
+    .status-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; border: 1px solid transparent; }
+    .status-done { background: rgba(16, 185, 129, 0.15); color: var(--done); border-color: rgba(16, 185, 129, 0.3); }
+    .status-partial { background: rgba(245, 158, 11, 0.15); color: var(--partial); border-color: rgba(245, 158, 11, 0.3); }
+    .status-verify { background: rgba(139, 92, 246, 0.15); color: var(--verify); border-color: rgba(139, 92, 246, 0.3); }
+    .status-planned { background: rgba(100, 116, 139, 0.15); color: var(--planned); border-color: rgba(100, 116, 139, 0.3); }
+
+    /* Timeline Bar */
+    .gantt-bar-cell { padding: 0 !important; }
+    .timeline-bar { height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; margin: 0 4px; position: relative; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer;}
+    .bar-done { background: var(--done); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+    .bar-partial { background: var(--partial); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+    .bar-verify { background: var(--verify); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
+    .bar-planned { background: var(--planned); }
+    .empty-cell { text-align: center; opacity: 0.2; cursor: pointer; transition: opacity 0.2s, background 0.2s; user-select: none; }
+    .empty-cell:hover { opacity: 0.8; background: rgba(255,255,255,0.05); border-radius: 4px; }
+
+    /* Modals */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; padding: 16px; opacity: 0; transition: opacity 0.3s ease; }
+    .modal-backdrop.show { opacity: 1; }
+    .modal { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; width: 100%; max-width: 540px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); transform: translateY(-20px); transition: transform 0.3s ease; }
+    .modal-backdrop.show .modal { transform: translateY(0); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 18px; font-weight: 700; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+    /* Toast Notifications */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--card-bg); border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-size: 13px; font-weight: 600; animation: slideIn 0.3s ease forwards; opacity: 0; transform: translateX(100%); }
+    .toast.success { border-left-color: var(--done); }
+    .toast.error { border-left-color: var(--danger); }
+    @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+    @keyframes fadeOut { to { opacity: 0; } }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <h1><span>TEAM BLACK SWAN</span> | G-04</h1>
+        <div class="meta-badges">
+          <span class="badge">Supervisor: <strong>Prof. Dr. Ibrahim Attiya</strong></span>
+          <span class="badge">Assistant: <strong>Eng. Nesma</strong></span>
+          <span class="badge">Project: <strong>Adaptive SIEM & Cyber Threat Platform</strong></span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
+        <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)"/>
+        <button class="btn btn-primary" onclick="openTaskModal()">+ Add New Task</button>
+        <button class="btn btn-danger" onclick="clearAllTasks()">Clear All</button>
+      </div>
+    </header>
+
+    <!-- Team Members Overview -->
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-card-title">
+          <span>Ahmed Elbialy</span><span class="team-card-role">Leader</span>
+        </div>
+        <div class="team-card-tags">
+          <span class="tag">Lead Architecture</span><span class="tag">AI GRC</span><span class="tag">Adaptive Intelligence</span>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-card-title">
+          <span>Mohamed Abdelhay</span><span class="team-card-role">SIEM / Integration</span>
+        </div>
+        <div class="team-card-tags">
+          <span class="tag">SIEM Dashboard</span><span class="tag">Integration Lead</span><span class="tag">Honeypot Setup</span>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-card-title">
+          <span>Abdulrahman Fawaz</span><span class="team-card-role">IoT / AI (ODIN)</span>
+        </div>
+        <div class="team-card-tags">
+          <span class="tag">IoT Design</span><span class="tag">AI Model (ODIN)</span><span class="tag">GNS3 Topology</span>
+        </div>
+      </div>
+      <div class="team-card">
+        <div class="team-card-title">
+          <span>Ahmed Abdo</span><span class="team-card-role">Malware Analysis</span>
+        </div>
+        <div class="team-card-tags">
+          <span class="tag">Malware Analysis</span><span class="tag">Payload Reverse Eng</span><span class="tag">Sandbox</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs (Interactive) -->
+    <div class="kpi-grid">
+      <div class="kpi-card" onclick="setFilterFromKPI('ALL')">
+        <span class="kpi-hint">Click to Reset</span>
+        <div class="kpi-label">Completion Rate</div>
+        <div class="kpi-value" id="kpi-rate" style="color: var(--done);">0%</div>
+      </div>
+      <div class="kpi-card" onclick="setFilterFromKPI('ALL')">
+        <span class="kpi-hint">Click to View All</span>
+        <div class="kpi-label">Total Tasks</div>
+        <div class="kpi-value" id="kpi-total">0</div>
+      </div>
+      <div class="kpi-card" onclick="setFilterFromKPI('Done')">
+        <span class="kpi-hint">Click to Filter</span>
+        <div class="kpi-label">Completed</div>
+        <div class="kpi-value" id="kpi-done" style="color: var(--done);">0</div>
+      </div>
+      <div class="kpi-card" onclick="setFilterFromKPI('Pending')">
+        <span class="kpi-hint">Click to Filter</span>
+        <div class="kpi-label">Verify / Partial</div>
+        <div class="kpi-value" id="kpi-pending" style="color: var(--partial);">0</div>
+      </div>
+      <div class="kpi-card" onclick="setFilterFromKPI('Planned')">
+        <span class="kpi-hint">Click to Filter</span>
+        <div class="kpi-label">Planned</div>
+        <div class="kpi-value" id="kpi-planned" style="color: var(--primary);">0</div>
+      </div>
+    </div>
+
+    <!-- Filters Toolbar -->
+    <div class="toolbar">
+      <div class="filter-group">
+        <select id="filterMember" onchange="renderApp()">
+          <option value="ALL">All Team Members</option>
+          <option value="Ahmed Elbialy">Ahmed Elbialy</option>
+          <option value="Mohamed Abdelhay">Mohamed Abdelhay</option>
+          <option value="Abdulrahman Fawaz">Abdulrahman Fawaz</option>
+          <option value="Ahmed Abdo">Ahmed Abdo</option>
+        </select>
+        <select id="filterWeek" onchange="renderApp()">
+          <option value="ALL">All Timeline Active</option>
+          <option value="1">Active in W1</option>
+          <option value="2">Active in W2</option>
+          <option value="3">Active in W3</option>
+          <option value="4">Active in W4</option>
+          <option value="5">Active in W5</option>
+          <option value="10">Active in W10</option>
+        </select>
+        <select id="filterStatus" onchange="renderApp()">
+          <option value="ALL">All Statuses</option>
+          <option value="Done">Done</option>
+          <option value="Partial">Partial</option>
+          <option value="Verify">Verify</option>
+          <option value="Planned">Planned</option>
+          <option value="Pending">Pending (Partial+Verify)</option>
+        </select>
+      </div>
+      <div>
+        <input type="text" id="searchInput" placeholder="Search tasks..." oninput="renderApp()" style="width: 240px;"/>
+      </div>
+    </div>
+
+    <!-- Gantt View -->
+    <div class="view-card">
+      <div class="view-header">
+        <h2>Dynamic Gantt & Task Timeline</h2>
+        <div class="legend">
+          <span>↕ Click Headers to Sort</span>
+          <span>✎ Click Text to Edit</span>
+          <span>● Click Empty Cell to Move</span>
+        </div>
+      </div>
+      <div class="gantt-container">
+        <table class="gantt-table">
+          <thead>
+            <tr id="ganttHeaderRow">
+              <!-- Dynamically populated -->
+            </tr>
+          </thead>
+          <tbody id="tasksTbody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Edit/Add Modal -->
+  <div class="modal-backdrop" id="taskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add / Edit Project Task</h3>
+        <button class="btn btn-secondary" onclick="closeModal('taskModal')" style="padding: 4px 8px;">✕</button>
+      </div>
+      <input type="hidden" id="mTaskId" />
+      <div class="form-group">
+        <label>Task Description / Deliverables</label>
+        <input type="text" id="mTaskTitle" placeholder="e.g., Integrate AbuseIPDB Threat Intel API" required />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Assigned Member</label>
+          <select id="mMember">
+            <option value="Ahmed Elbialy">Ahmed Elbialy</option>
+            <option value="Mohamed Abdelhay">Mohamed Abdelhay</option>
+            <option value="Abdulrahman Fawaz">Abdulrahman Fawaz</option>
+            <option value="Ahmed Abdo">Ahmed Abdo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="mStatus">
+            <option value="Planned">Planned</option>
+            <option value="Verify">Verify</option>
+            <option value="Partial">Partial</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="mPriority">
+            <option value="Low">Low Priority</option>
+            <option value="Medium">Medium Priority</option>
+            <option value="High">High Priority</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start (W1-14)</label>
+            <input type="number" id="mStartWeek" min="1" max="14" value="5" />
+          </div>
+          <div class="form-group">
+            <label>End (W1-14)</label>
+            <input type="number" id="mEndWeek" min="1" max="14" value="5" />
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Task Notes (Optional)</label>
+        <textarea id="mNotes" class="modal-input" placeholder="Add specific technical details or links here..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('taskModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTaskModal()">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Confirm Modal -->
+  <div class="modal-backdrop" id="confirmModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>Confirm Action</h3>
+      </div>
+      <p id="confirmMessage" style="font-size: 14px; color: var(--text-muted);">Are you sure?</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+        <button class="btn btn-danger" id="confirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast & Tooltip Containers -->
+  <div class="toast-container" id="toastContainer"></div>
+  <div id="globalTooltip" class="custom-tooltip"></div>
+
+  <script>
+    // --- Calendar Math Logic ---
+    const W5_START_DATE = new Date(2026, 9, 17); // Month is 0-indexed (9 = Oct)
+    const TOTAL_WEEKS = 14;
+
+    function getWeekLabel(weekNum) {
+      let start = new Date(W5_START_DATE);
+      start.setDate(start.getDate() + ((weekNum - 5) * 7));
+      let end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      let sMonth = months[start.getMonth()], sDate = start.getDate();
+      let eMonth = months[end.getMonth()], eDate = end.getDate();
+      return sMonth === eMonth ? `${sMonth} ${sDate}-${eDate}` : `${sMonth} ${sDate}-${eMonth} ${eDate}`;
+    }
+
+    // --- Initial Data ---
+    const INITIAL_TASKS = [
+      { id: '1', title: 'SOC Tier 1/2 research & Hybrid Neuro-Symbolic AI architecture', member: 'Ahmed Elbialy', startWeek: 1, endWeek: 2, status: 'Done', priority: 'High', notes: 'Reference QRadar docs and baseline AI scoring model.' },
+      { id: '2', title: 'Project scope definition & QRadar architectural study', member: 'Mohamed Abdelhay', startWeek: 1, endWeek: 1, status: 'Done', priority: 'Medium', notes: '' },
+      { id: '3', title: 'Documentation baseline & project specs', member: 'Abdulrahman Fawaz', startWeek: 1, endWeek: 2, status: 'Done', priority: 'Low', notes: '' },
+      { id: '4', title: 'Initial malware analysis toolchain setup & scoping', member: 'Ahmed Abdo', startWeek: 1, endWeek: 1, status: 'Done', priority: 'Medium', notes: 'Set up FlareVM instance.' },
+      
+      { id: '5', title: 'C2 beaconing & DNS tunneling algorithms mapping', member: 'Ahmed Elbialy', startWeek: 2, endWeek: 3, status: 'Done', priority: 'High', notes: '' },
+      { id: '6', title: 'Honeypot environment deployment (T-Pot baseline)', member: 'Mohamed Abdelhay', startWeek: 2, endWeek: 3, status: 'Done', priority: 'High', notes: 'Deploy on isolated VLAN.' },
+      
+      { id: '7', title: 'Central AI coordinator (brain.py) & threat-scoring', member: 'Ahmed Elbialy', startWeek: 3, endWeek: 4, status: 'Done', priority: 'High', notes: '' },
+      { id: '8', title: 'React-based SIEM dashboard modules design', member: 'Mohamed Abdelhay', startWeek: 3, endWeek: 4, status: 'Verify', priority: 'Medium', notes: 'Ensure glassmorphism UI matches mockups.' },
+      { id: '9', title: 'VMware & GNS3 VM setup, Ubuntu OS deploy', member: 'Abdulrahman Fawaz', startWeek: 3, endWeek: 3, status: 'Done', priority: 'Medium', notes: '' },
+
+      { id: '10', title: 'Interactive CLI (cli/main.py) & PCAP generator', member: 'Ahmed Elbialy', startWeek: 4, endWeek: 4, status: 'Done', priority: 'Low', notes: '' },
+      { id: '11', title: 'GNS3/VMware network adapter bridges config', member: 'Abdulrahman Fawaz', startWeek: 4, endWeek: 5, status: 'Partial', priority: 'High', notes: 'Bridge issue with VMnet8 needs debugging.' },
+
+      { id: '12', title: 'Threat Intelligence APIs (AbuseIPDB/VT) integration', member: 'Ahmed Elbialy', startWeek: 5, endWeek: 6, status: 'Planned', priority: 'Medium', notes: 'Need to secure API keys.' },
+      { id: '13', title: 'Interactive MITRE ATT&CK matrix overlay build', member: 'Mohamed Abdelhay', startWeek: 5, endWeek: 7, status: 'Planned', priority: 'High', notes: '' },
+      { id: '14', title: 'Dynamic sandbox prep & live behavior logging', member: 'Ahmed Abdo', startWeek: 5, endWeek: 6, status: 'Planned', priority: 'High', notes: 'Isolate from host completely.' }
+    ];
+
+    let tasks = JSON.parse(localStorage.getItem('black_swan_tasks_v3')) || INITIAL_TASKS;
+
+    // Default missing fields for backward compatibility with v2 storage
+    tasks = tasks.map(t => ({...t, priority: t.priority || 'Medium', notes: t.notes || ''}));
+
+    let sortColumn = null;
+    let sortDesc = false;
+
+    // --- State Management ---
+    function saveState() {
+      localStorage.setItem('black_swan_tasks_v3', JSON.stringify(tasks));
+      renderApp();
+    }
+
+    // --- Notifications & Tooltips ---
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function customConfirm(message, onConfirm) {
+      document.getElementById('confirmMessage').textContent = message;
+      const btn = document.getElementById('confirmBtn');
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.onclick = () => { closeModal('confirmModal'); onConfirm(); };
+      openModalOverlay('confirmModal');
+    }
+
+    window.showNoteTooltip = function(e, encodedNote) {
+      const tooltip = document.getElementById('globalTooltip');
+      tooltip.textContent = decodeURIComponent(encodedNote);
+      tooltip.classList.add('show');
+      moveNoteTooltip(e);
+    };
+    window.moveNoteTooltip = function(e) {
+      const tooltip = document.getElementById('globalTooltip');
+      tooltip.style.left = (e.pageX + 15) + 'px';
+      tooltip.style.top = (e.pageY + 15) + 'px';
+    };
+    window.hideNoteTooltip = function() {
+      document.getElementById('globalTooltip').classList.remove('show');
+    };
+
+    function openModalOverlay(id) {
+      const el = document.getElementById(id);
+      el.style.display = 'flex';
+      void el.offsetWidth;
+      el.classList.add('show');
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      el.classList.remove('show');
+      setTimeout(() => { el.style.display = 'none'; }, 300);
+    }
+
+    // --- Interactive Actions ---
+    function toggleSort(col) {
+      if (sortColumn === col) { sortDesc = !sortDesc; } 
+      else { sortColumn = col; sortDesc = false; }
+      renderHeaders();
+      renderApp();
+    }
+
+    function setFilterFromKPI(statusVal) {
+      document.getElementById('filterStatus').value = statusVal;
+      renderApp();
+      showToast(`Filter applied: ${statusVal === 'ALL' ? 'View All' : statusVal}`);
+    }
+
+    function cycleStatus(id) {
+      const statuses = ['Planned', 'Partial', 'Verify', 'Done'];
+      tasks = tasks.map(t => {
+        if (t.id === id) {
+          return { ...t, status: statuses[(statuses.indexOf(t.status) + 1) % statuses.length] };
+        }
+        return t;
+      });
+      saveState();
+    }
+
+    function quickMoveTask(id, targetStartWeek) {
+      tasks = tasks.map(t => {
+        if (t.id === id) {
+          const duration = t.endWeek - t.startWeek;
+          let newEnd = targetStartWeek + duration;
+          if (newEnd > TOTAL_WEEKS) newEnd = TOTAL_WEEKS; 
+          return { ...t, startWeek: targetStartWeek, endWeek: newEnd };
+        }
+        return t;
+      });
+      saveState();
+      showToast(`Task moved to start at Week ${targetStartWeek}`);
+    }
+
+    function deleteTask(id) {
+      customConfirm('Are you sure you want to delete this task? This action cannot be undone.', () => {
+        tasks = tasks.filter(t => t.id !== id);
+        saveState();
+        showToast('Task deleted successfully', 'success');
+      });
+    }
+
+    function clearAllTasks() {
+      if (tasks.length === 0) return showToast('No tasks to clear.', 'error');
+      customConfirm('WARNING: Are you absolutely sure you want to CLEAR ALL tasks? This cannot be undone.', () => {
+        tasks = [];
+        saveState();
+        showToast('All tasks have been cleared.', 'success');
+      });
+    }
+
+    // --- Modal Logic ---
+    function openTaskModal(taskId = null) {
+      const isEdit = taskId !== null;
+      document.getElementById('modalTitle').textContent = isEdit ? 'Edit Task' : 'Add New Task';
+      
+      if (isEdit) {
+        const t = tasks.find(x => x.id === taskId);
+        document.getElementById('mTaskId').value = t.id;
+        document.getElementById('mTaskTitle').value = t.title;
+        document.getElementById('mMember').value = t.member;
+        document.getElementById('mStatus').value = t.status;
+        document.getElementById('mPriority').value = t.priority || 'Medium';
+        document.getElementById('mStartWeek').value = t.startWeek;
+        document.getElementById('mEndWeek').value = t.endWeek;
+        document.getElementById('mNotes').value = t.notes || '';
+      } else {
+        document.getElementById('mTaskId').value = '';
+        document.getElementById('mTaskTitle').value = '';
+        document.getElementById('mPriority').value = 'Medium';
+        document.getElementById('mStartWeek').value = 5;
+        document.getElementById('mEndWeek').value = 5;
+        document.getElementById('mNotes').value = '';
+      }
+      openModalOverlay('taskModal');
+    }
+
+    function saveTaskModal() {
+      const id = document.getElementById('mTaskId').value;
+      const title = document.getElementById('mTaskTitle').value.trim();
+      const member = document.getElementById('mMember').value;
+      const status = document.getElementById('mStatus').value;
+      const priority = document.getElementById('mPriority').value;
+      const startWeek = parseInt(document.getElementById('mStartWeek').value, 10);
+      const endWeek = parseInt(document.getElementById('mEndWeek').value, 10);
+      const notes = document.getElementById('mNotes').value.trim();
+
+      if (!title) return showToast('Please enter a task title.', 'error');
+      if (startWeek < 1 || startWeek > TOTAL_WEEKS || endWeek < 1 || endWeek > TOTAL_WEEKS) return showToast('Weeks must be 1-14.', 'error');
+      if (startWeek > endWeek) return showToast('Start week cannot be after end week.', 'error');
+
+      if (id) {
+        tasks = tasks.map(t => t.id === id ? { id, title, member, status, priority, startWeek, endWeek, notes } : t);
+        showToast('Task updated successfully.');
+      } else {
+        tasks.push({ id: Date.now().toString(), title, member, status, priority, startWeek, endWeek, notes });
+        showToast('Task created successfully.');
+      }
+      
+      closeModal('taskModal');
+      saveState();
+    }
+
+    // --- Inline Editing ---
+    let editingCell = null;
+    function startInlineEdit(taskId, field) {
+      if (editingCell) finishInlineEdit(editingCell.taskId, editingCell.field, true);
+      const textSpan = document.getElementById(`${field}-text-${taskId}`);
+      const inputEl = document.getElementById(`${field}-input-${taskId}`);
+      
+      textSpan.style.display = 'none';
+      inputEl.style.display = 'inline-block';
+      inputEl.focus();
+      
+      if(field === 'title') inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length;
+      editingCell = { taskId, field };
+    }
+
+    function finishInlineEdit(taskId, field, cancel = false) {
+      if (!editingCell || editingCell.taskId !== taskId || editingCell.field !== field) return;
+      
+      const inputEl = document.getElementById(`${field}-input-${taskId}`);
+      const textSpan = document.getElementById(`${field}-text-${taskId}`);
+      const newVal = inputEl.value.trim();
+      
+      if (!cancel && newVal) {
+        tasks = tasks.map(t => t.id === taskId ? { ...t, [field]: newVal } : t);
+        setTimeout(saveState, 50); 
+      } else {
+        textSpan.style.display = 'inline-block';
+        inputEl.style.display = 'none';
+        inputEl.value = textSpan.textContent;
+      }
+      editingCell = null;
+    }
+
+    // --- Rendering Logic ---
+    function renderHeaders() {
+      const getIcon = (col) => sortColumn === col ? (sortDesc ? '↓' : '↑') : '';
+      let headerHtml = `
+        <th style="width: 280px;">
+          <span class="sortable" onclick="toggleSort('title')">Task / Deliverable <span class="sort-icon">${getIcon('title')}</span></span>
+        </th>
+        <th style="width: 140px;">
+          <span class="sortable" onclick="toggleSort('member')">Member <span class="sort-icon">${getIcon('member')}</span></span>
+        </th>
+        <th style="width: 100px;">
+          <span class="sortable" onclick="toggleSort('status')">Status <span class="sort-icon">${getIcon('status')}</span></span>
+        </th>
+      `;
+      for (let w = 1; w <= TOTAL_WEEKS; w++) {
+        let isPlan = w >= 5 ? '(Plan)' : '';
+        headerHtml += `
+          <th class="week-col">W${w} ${isPlan}<br>
+            <span style="font-size:9px; color:var(--text-muted); font-weight:normal;">${getWeekLabel(w)}</span>
+          </th>`;
+      }
+      headerHtml += `<th style="width: 90px; text-align: center;">Actions</th>`;
+      document.getElementById('ganttHeaderRow').innerHTML = headerHtml;
+    }
+
+    function renderApp() {
+      const memberFilter = document.getElementById('filterMember').value;
+      const weekFilter = document.getElementById('filterWeek').value;
+      const statusFilter = document.getElementById('filterStatus').value;
+      const query = document.getElementById('searchInput').value.toLowerCase();
+
+      // Filter
+      let filtered = tasks.filter(t => {
+        const matchMem = memberFilter === 'ALL' || t.member === memberFilter;
+        let matchWeek = true;
+        if (weekFilter !== 'ALL') {
+          const w = parseInt(weekFilter);
+          matchWeek = (w >= t.startWeek && w <= t.endWeek);
+        }
+        const matchStatus = statusFilter === 'ALL' || t.status === statusFilter || 
+                            (statusFilter === 'Pending' && (t.status === 'Verify' || t.status === 'Partial'));
+        const matchQuery = t.title.toLowerCase().includes(query) || t.member.toLowerCase().includes(query);
+        return matchMem && matchWeek && matchStatus && matchQuery;
+      });
+
+      // Sort
+      if (sortColumn) {
+        filtered.sort((a, b) => {
+          let valA = (a[sortColumn] || '').toString().toLowerCase();
+          let valB = (b[sortColumn] || '').toString().toLowerCase();
+          if (valA < valB) return sortDesc ? 1 : -1;
+          if (valA > valB) return sortDesc ? -1 : 1;
+          return 0;
+        });
+      }
+
+      // Update KPIs
+      const total = tasks.length;
+      const done = tasks.filter(t => t.status === 'Done').length;
+      const pending = tasks.filter(t => t.status === 'Verify' || t.status === 'Partial').length;
+      const planned = tasks.filter(t => t.status === 'Planned').length;
+      const rate = total === 0 ? 0 : Math.round((done / total) * 100);
+
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-done').textContent = done;
+      document.getElementById('kpi-pending').textContent = pending;
+      document.getElementById('kpi-planned').textContent = planned;
+      document.getElementById('kpi-rate').textContent = `${rate}%`;
+
+      // Render Table
+      const tbody = document.getElementById('tasksTbody');
+      tbody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${3 + TOTAL_WEEKS + 1}" style="text-align:center; padding: 32px; color: var(--text-muted);">No tasks match the current filters.</td></tr>`;
+        return;
+      }
+
+      const memberOptions = ['Ahmed Elbialy', 'Mohamed Abdelhay', 'Abdulrahman Fawaz', 'Ahmed Abdo'];
+
+      filtered.forEach(task => {
+        const tr = document.createElement('tr');
+        tr.className = 'gantt-row';
+
+        let statusClass = 'status-planned', barClass = 'bar-planned';
+        if (task.status === 'Done') { statusClass = 'status-done'; barClass = 'bar-done'; }
+        else if (task.status === 'Partial') { statusClass = 'status-partial'; barClass = 'bar-partial'; }
+        else if (task.status === 'Verify') { statusClass = 'status-verify'; barClass = 'bar-verify'; }
+
+        const prio = task.priority || 'Medium';
+        let prioBadgeHtml = `<span class="priority-badge p-${prio.toLowerCase()}" title="${prio} Priority">${prio.charAt(0)}</span>`;
+
+        let notesIconHtml = '';
+        if (task.notes && task.notes.trim() !== '') {
+          const encNote = encodeURIComponent(task.notes);
+          notesIconHtml = `<span class="note-icon" onmouseenter="showNoteTooltip(event, '${encNote}')" onmousemove="moveNoteTooltip(event)" onmouseleave="hideNoteTooltip()">📝</span>`;
+        }
+
+        let memberSelectHtml = `<select id="member-input-${task.id}" class="inline-input" style="display:none;" onblur="finishInlineEdit('${task.id}', 'member')" onchange="finishInlineEdit('${task.id}', 'member')">`;
+        memberOptions.forEach(opt => { memberSelectHtml += `<option value="${opt}" ${task.member === opt ? 'selected' : ''}>${opt}</option>`; });
+        memberSelectHtml += `</select>`;
+
+        let html = `
+          <td>
+            <div class="editable-cell">
+              ${prioBadgeHtml}
+              <strong class="editable-text" id="title-text-${task.id}" onclick="startInlineEdit('${task.id}', 'title')">${task.title}</strong>
+              ${notesIconHtml}
+              <input type="text" id="title-input-${task.id}" class="inline-input" style="display:none;" value="${task.title}" 
+                     onblur="finishInlineEdit('${task.id}', 'title')" onkeydown="if(event.key==='Enter') this.blur();">
+            </div>
+          </td>
+          <td style="color: var(--text-muted); font-size: 12px;">
+             <div class="editable-cell">
+              <span class="editable-text" id="member-text-${task.id}" onclick="startInlineEdit('${task.id}', 'member')">${task.member}</span>
+              ${memberSelectHtml}
+            </div>
+          </td>
+          <td>
+            <span class="status-pill ${statusClass}" onclick="cycleStatus('${task.id}')" title="Click to cycle status">${task.status}</span>
+          </td>
+        `;
+
+        let w = 1;
+        while (w <= TOTAL_WEEKS) {
+          if (w === task.startWeek) {
+            let span = task.endWeek - task.startWeek + 1;
+            html += `
+              <td colspan="${span}" class="gantt-bar-cell">
+                <div class="timeline-bar ${barClass}" onclick="openTaskModal('${task.id}')" title="Edit ${task.title}">
+                  ${task.status}
+                </div>
+              </td>
+            `;
+            w = task.endWeek + 1;
+          } else {
+            html += `<td class="empty-cell" onclick="quickMoveTask('${task.id}', ${w})" title="Move start to Week ${w}">·</td>`;
+            w++;
+          }
+        }
+
+        html += `
+          <td style="text-align: center; display: flex; gap: 4px; justify-content: center;">
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openTaskModal('${task.id}')" title="Edit">✎</button>
+            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteTask('${task.id}')" title="Delete">✕</button>
+          </td>
+        `;
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Import / Export ---
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+      const a = document.createElement('a');
+      a.href = dataStr; a.download = `BLACK_SWAN_Tasks_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      showToast('JSON exported successfully.');
+    }
+
+    function exportCSV() {
+      const headers = ['ID', 'Task Title', 'Assigned Member', 'Status', 'Priority', 'Start Week', 'End Week', 'Notes'];
+      const rows = tasks.map(t => [
+        t.id,
+        `"${t.title.replace(/"/g, '""')}"`,
+        `"${t.member}"`,
+        t.status,
+        t.priority || 'Medium',
+        t.startWeek,
+        t.endWeek,
+        `"${(t.notes || '').replace(/"/g, '""')}"`
+      ]);
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const a = document.createElement("a");
+      a.href = encodeURI(csvContent); a.download = `BLACK_SWAN_Tasks_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      showToast('CSV exported successfully.');
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            tasks = imported.map(t => ({
+              ...t,
+              startWeek: t.startWeek || t.week || 1,
+              endWeek: t.endWeek || t.week || 1,
+              priority: t.priority || 'Medium',
+              notes: t.notes || ''
+            }));
+            saveState();
+            showToast('Tasks successfully imported!');
+          }
+        } catch (err) { showToast('Invalid JSON file format.', 'error'); }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // --- Init ---
+    renderHeaders();
+    renderApp();
+  </script>
+</body>
+</html>
