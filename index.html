@@ -6,7 +6,7 @@
   <title>BLACK SWAN | Project Tracker & Gantt Chart</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0b0f17;
@@ -33,7 +33,7 @@
       line-height: 1.5;
     }
 
-    .container { max-width: 1500px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+    .container { max-width: 1600px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 
     /* Header */
     header {
@@ -72,7 +72,7 @@
     .team-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
     .tag { font-size: 11px; background: rgba(255,255,255,0.04); padding: 3px 8px; border-radius: 4px; color: var(--text-muted); }
 
-    /* KPI Summary - Now Clickable */
+    /* KPI Summary */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
     .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px 20px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; }
     .kpi-card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.2); background: var(--surface-hover); }
@@ -84,47 +84,150 @@
     /* Filters Bar */
     .toolbar { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 20px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
     .filter-group { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    select, input[type="text"], input[type="number"], textarea.modal-input {
+    select, input[type="text"], input[type="number"], input[type="date"], textarea.modal-input {
       background: #0f172a; border: 1px solid var(--card-border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; transition: border 0.2s;
     }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
     textarea.modal-input { width: 100%; resize: vertical; min-height: 70px; }
-    select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea.modal-input:focus { border-color: var(--primary); }
+    select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, textarea.modal-input:focus { border-color: var(--primary); }
 
     /* Gantt & Table Wrapper */
     .view-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    .view-header { padding: 18px 24px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
-    .view-header h2 { font-size: 18px; font-weight: 700; }
-    .legend { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; display:flex; gap:16px; }
+    .view-header { padding: 18px 24px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .view-header-left { display: flex; flex-direction: column; gap: 4px; }
+    .view-header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .legend { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; display: flex; gap: 14px; flex-wrap: wrap; }
+    
+    .calendar-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(15, 23, 42, 0.6); padding: 8px 14px; border-radius: 10px; border: 1px solid var(--card-border); }
+    .control-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+    .control-item input { padding: 5px 8px; font-size: 12px; }
 
     /* Sortable Headers */
     .sortable { cursor: pointer; user-select: none; transition: color 0.2s; display: inline-flex; align-items: center; }
     .sortable:hover { color: var(--text); }
     .sort-icon { display: inline-block; width: 14px; margin-left: 4px; font-size: 14px; font-family: sans-serif; color: var(--primary); }
 
-    /* Gantt Visual Grid */
-    .gantt-container { overflow-x: auto; padding: 20px; }
-    .gantt-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; min-width: 1200px; table-layout: fixed; }
-    .gantt-table th { font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; color: var(--text-muted); padding: 8px 6px; text-align: left; vertical-align: bottom; }
-    .gantt-table th.week-col { text-align: center; width: 6.5%; }
+    /* Calendar / Gantt Visual Grid */
+    .gantt-container { overflow-x: auto; padding: 16px 20px 24px; scroll-behavior: smooth; }
+    .gantt-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 1450px; table-layout: fixed; }
     
-    .gantt-row { background: rgba(255, 255, 255, 0.02); transition: background 0.15s; }
+    .gantt-table th { 
+      font-size: 11px; 
+      font-family: 'JetBrains Mono', monospace; 
+      text-transform: uppercase; 
+      color: var(--text-muted); 
+      padding: 10px 4px; 
+      text-align: center; 
+      vertical-align: middle; 
+      background: #0f172a;
+      border-top: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--card-border);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Sticky Left Columns (Task, Member, Status stay locked together on scroll) */
+    .col-task { width: 280px; min-width: 280px; }
+    .col-member { width: 145px; min-width: 145px; }
+    .col-status { width: 105px; min-width: 105px; }
+
+    @media (min-width: 960px) {
+      .gantt-table th.col-task,
+      .gantt-row td.col-task {
+        position: sticky;
+        left: 0;
+        z-index: 20;
+      }
+      .gantt-table th.col-member,
+      .gantt-row td.col-member {
+        position: sticky;
+        left: 280px;
+        z-index: 20;
+      }
+      .gantt-table th.col-status,
+      .gantt-row td.col-status {
+        position: sticky;
+        left: 425px;
+        z-index: 20;
+        box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4);
+        border-right: 1px solid var(--card-border);
+      }
+    }
+
+    .gantt-table th:first-child { 
+      text-align: left; 
+      padding-left: 16px; 
+      border-top-left-radius: 8px; 
+      border-bottom-left-radius: 8px; 
+      border-left: 1px solid var(--card-border);
+    }
+    .gantt-table th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-right: 1px solid var(--card-border); }
+    
+    .gantt-table th.week-col { width: 66px; transition: background 0.2s; }
+    
+    .week-header-title { font-weight: 700; color: var(--primary); font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 2px; }
+    .week-header-sub { font-size: 9px; color: var(--text-muted); display: block; font-weight: normal; letter-spacing: -0.3px; }
+
+    /* Current Week Highlighting */
+    .current-week-header {
+      background: rgba(56, 189, 248, 0.14) !important;
+      border-top: 2px solid var(--primary) !important;
+      border-bottom: 1px solid var(--primary) !important;
+    }
+    .current-week-cell {
+      background: rgba(56, 189, 248, 0.06) !important;
+      border-left: 1px dashed rgba(56, 189, 248, 0.35) !important;
+      border-right: 1px dashed rgba(56, 189, 248, 0.35) !important;
+    }
+    .now-badge {
+      background: var(--primary);
+      color: #0b0f17;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 3px;
+      line-height: 1.2;
+    }
+
+    .gantt-row { background: rgba(255, 255, 255, 0.015); transition: background 0.15s; }
     .gantt-row:hover { background: var(--surface-hover); }
-    .gantt-row td { padding: 10px 8px; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); position: relative; }
-    .gantt-row td:first-child { border-left: 1px solid rgba(255,255,255,0.04); border-radius: 8px 0 0 8px; padding-left: 16px; }
-    .gantt-row td:last-child { border-right: 1px solid rgba(255,255,255,0.04); border-radius: 0 8px 8px 0; padding-right: 16px; }
+    .gantt-row td { 
+      padding: 8px 6px; 
+      font-size: 13px; 
+      border-top: 1px solid rgba(255,255,255,0.03); 
+      border-bottom: 1px solid rgba(255,255,255,0.03); 
+      border-right: 1px solid rgba(255,255,255,0.04);
+      position: relative; 
+      vertical-align: middle; 
+    }
+    .gantt-row td.col-task,
+    .gantt-row td.col-member,
+    .gantt-row td.col-status {
+      background: #131b2e;
+    }
+    .gantt-row:hover td.col-task,
+    .gantt-row:hover td.col-member,
+    .gantt-row:hover td.col-status {
+      background: var(--surface-hover);
+    }
+    .gantt-row td:first-child { 
+      border-left: 1px solid rgba(255,255,255,0.03); 
+      border-radius: 8px 0 0 8px; 
+      padding-left: 16px;
+    }
+    .gantt-row td:last-child { border-right: 1px solid rgba(255,255,255,0.03); border-radius: 0 8px 8px 0; padding-right: 12px; text-align: center; }
 
     /* Editable Fields & Priorities */
-    .editable-cell { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 4px; border-radius: 4px; transition: background 0.2s; border: 1px solid transparent; min-height: 32px; }
-    .editable-text { cursor: pointer; border-bottom: 1px dashed transparent; transition: border 0.2s; }
+    .editable-cell { display: flex; align-items: center; flex-wrap: nowrap; gap: 6px; padding: 2px 4px; border-radius: 4px; transition: background 0.2s; min-height: 32px; }
+    .editable-text { cursor: pointer; border-bottom: 1px dashed transparent; transition: border 0.2s, color 0.2s; overflow: hidden; text-overflow: ellipsis; }
     .editable-text:hover { border-bottom: 1px dashed var(--text-muted); color: var(--primary); }
-    .inline-input { width: 100%; padding: 4px; background: #0b0f17; color: #fff; border: 1px solid var(--primary); border-radius: 4px; font-family: inherit; font-size: inherit; }
+    .inline-input { width: 100%; padding: 4px 6px; background: #0b0f17; color: #fff; border: 1px solid var(--primary); border-radius: 4px; font-family: inherit; font-size: inherit; }
 
-    .priority-badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; user-select: none; }
+    .priority-badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; user-select: none; flex-shrink: 0; }
     .p-high { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
     .p-medium { background: rgba(245, 158, 11, 0.15); color: var(--partial); border: 1px solid rgba(245, 158, 11, 0.3); }
     .p-low { background: rgba(56, 189, 248, 0.15); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.3); }
 
-    .note-icon { cursor: help; font-size: 14px; user-select: none; transition: transform 0.2s; }
+    .note-icon { cursor: help; font-size: 14px; user-select: none; transition: transform 0.2s; flex-shrink: 0; }
     .note-icon:hover { transform: scale(1.2); }
 
     /* Global Tooltip */
@@ -132,21 +235,44 @@
     .custom-tooltip.show { opacity: 1; }
 
     /* Status Pills */
-    .status-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; border: 1px solid transparent; }
+    .status-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; border: 1px solid transparent; transition: transform 0.15s; }
+    .status-pill:hover { transform: scale(1.05); }
     .status-done { background: rgba(16, 185, 129, 0.15); color: var(--done); border-color: rgba(16, 185, 129, 0.3); }
     .status-partial { background: rgba(245, 158, 11, 0.15); color: var(--partial); border-color: rgba(245, 158, 11, 0.3); }
     .status-verify { background: rgba(139, 92, 246, 0.15); color: var(--verify); border-color: rgba(139, 92, 246, 0.3); }
     .status-planned { background: rgba(100, 116, 139, 0.15); color: var(--planned); border-color: rgba(100, 116, 139, 0.3); }
 
-    /* Timeline Bar */
-    .gantt-bar-cell { padding: 0 !important; }
-    .timeline-bar { height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; margin: 0 4px; position: relative; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer;}
+    /* Clean Static Timeline Bar (No shifting buttons inside) */
+    .gantt-bar-cell { padding: 3px 2px !important; }
+    .timeline-bar { 
+      height: 28px; 
+      border-radius: 6px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 0 6px;
+      font-size: 11px; 
+      font-weight: 700; 
+      color: #fff; 
+      position: relative; 
+      overflow: hidden; 
+      white-space: nowrap; 
+      text-overflow: ellipsis;
+      cursor: pointer;
+      user-select: none;
+      transition: filter 0.15s;
+    }
+    .timeline-bar:hover { filter: brightness(1.08); }
+
     .bar-done { background: var(--done); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
     .bar-partial { background: var(--partial); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
     .bar-verify { background: var(--verify); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
     .bar-planned { background: var(--planned); }
-    .empty-cell { text-align: center; opacity: 0.2; cursor: pointer; transition: opacity 0.2s, background 0.2s; user-select: none; }
-    .empty-cell:hover { opacity: 0.8; background: rgba(255,255,255,0.05); border-radius: 4px; }
+
+    .empty-cell { text-align: center; color: rgba(255,255,255,0.15); user-select: none; font-size: 14px; }
+    .empty-cell.movable { cursor: pointer; transition: all 0.15s; }
+    .empty-cell.movable:hover { color: var(--primary); background: rgba(56, 189, 248, 0.1) !important; }
+    .empty-cell.locked { cursor: default; }
 
     /* Modals */
     .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; padding: 16px; opacity: 0; transition: opacity 0.3s ease; }
@@ -167,7 +293,6 @@
     .toast.error { border-left-color: var(--danger); }
     @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
     @keyframes fadeOut { to { opacity: 0; } }
-
   </style>
 </head>
 <body>
@@ -176,7 +301,7 @@
     <!-- Header -->
     <header>
       <div class="brand">
-        <h1><span>TEAM BLACK SWAN</span> | G-04</h1>
+        <h1><span>TEAM BLACK SWAN</span> | <span>ARES</span> | G-04</h1>
         <div class="meta-badges">
           <span class="badge">Supervisor: <strong>Prof. Dr. Ibrahim Attiya</strong></span>
           <span class="badge">Assistant: <strong>Eng. Nesma</strong></span>
@@ -264,18 +389,13 @@
         <select id="filterMember" onchange="renderApp()">
           <option value="ALL">All Team Members</option>
           <option value="Ahmed Elbialy">Ahmed Elbialy</option>
+          <option value="Eng. Nesma">Eng. Nesma</option>
           <option value="Mohamed Abdelhay">Mohamed Abdelhay</option>
           <option value="Abdulrahman Fawaz">Abdulrahman Fawaz</option>
           <option value="Ahmed Abdo">Ahmed Abdo</option>
         </select>
         <select id="filterWeek" onchange="renderApp()">
-          <option value="ALL">All Timeline Active</option>
-          <option value="1">Active in W1</option>
-          <option value="2">Active in W2</option>
-          <option value="3">Active in W3</option>
-          <option value="4">Active in W4</option>
-          <option value="5">Active in W5</option>
-          <option value="10">Active in W10</option>
+          <!-- Dynamically populated -->
         </select>
         <select id="filterStatus" onchange="renderApp()">
           <option value="ALL">All Statuses</option>
@@ -283,25 +403,38 @@
           <option value="Partial">Partial</option>
           <option value="Verify">Verify</option>
           <option value="Planned">Planned</option>
-          <option value="Pending">Pending (Partial+Verify)</option>
+          <option value="Pending">Verify / Partial</option>
         </select>
       </div>
-      <div>
-        <input type="text" id="searchInput" placeholder="Search tasks..." oninput="renderApp()" style="width: 240px;"/>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="searchInput" placeholder="Search tasks or members..." oninput="renderApp()" style="width: 240px;"/>
       </div>
     </div>
 
     <!-- Gantt View -->
     <div class="view-card">
       <div class="view-header">
-        <h2>Dynamic Gantt & Task Timeline</h2>
-        <div class="legend">
-          <span>↕ Click Headers to Sort</span>
-          <span>✎ Click Text to Edit</span>
-          <span>● Click Empty Cell to Move</span>
+        <div class="view-header-left">
+          <h2>Dynamic Gantt & Task Timeline</h2>
+          <div class="legend">
+            <span>↕ Click Headers to Sort</span>
+            <span>✎ Click Text or Bar to Edit</span>
+            <span>🔒 Done / Partial Bars Locked on Grid</span>
+          </div>
+        </div>
+        <div class="calendar-controls">
+          <div class="control-item">
+            <label for="w1StartDateInput">W1 Start:</label>
+            <input type="date" id="w1StartDateInput" onchange="updateCalendarConfig()" title="Set Week 1 Start Date" />
+          </div>
+          <div class="control-item">
+            <label for="totalWeeksInput">Weeks:</label>
+            <input type="number" id="totalWeeksInput" min="6" max="52" style="width: 64px;" onchange="updateCalendarConfig()" title="Set Total Project Weeks" />
+          </div>
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="scrollToCurrentWeek()">Jump to NOW</button>
         </div>
       </div>
-      <div class="gantt-container">
+      <div class="gantt-container" id="ganttScrollContainer">
         <table class="gantt-table">
           <thead>
             <tr id="ganttHeaderRow">
@@ -333,6 +466,7 @@
           <label>Assigned Member</label>
           <select id="mMember">
             <option value="Ahmed Elbialy">Ahmed Elbialy</option>
+            <option value="Eng. Nesma">Eng. Nesma</option>
             <option value="Mohamed Abdelhay">Mohamed Abdelhay</option>
             <option value="Abdulrahman Fawaz">Abdulrahman Fawaz</option>
             <option value="Ahmed Abdo">Ahmed Abdo</option>
@@ -359,12 +493,12 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Start (W1-14)</label>
-            <input type="number" id="mStartWeek" min="1" max="14" value="5" />
+            <label id="lblStartWeek">Start Week</label>
+            <input type="number" id="mStartWeek" min="1" max="52" value="5" />
           </div>
           <div class="form-group">
-            <label>End (W1-14)</label>
-            <input type="number" id="mEndWeek" min="1" max="14" value="5" />
+            <label id="lblEndWeek">End Week</label>
+            <input type="number" id="mEndWeek" min="1" max="52" value="5" />
           </div>
         </div>
       </div>
@@ -398,22 +532,88 @@
   <div id="globalTooltip" class="custom-tooltip"></div>
 
   <script>
-    // --- Calendar Math Logic ---
-    const W5_START_DATE = new Date(2026, 9, 17); // Month is 0-indexed (9 = Oct)
-    const TOTAL_WEEKS = 14;
+    // --- Dynamic Calendar Configuration ---
+    const DEFAULT_CONFIG = {
+      w1StartDate: '2026-09-19',
+      totalWeeks: 18
+    };
+
+    let calendarConfig = JSON.parse(localStorage.getItem('black_swan_calendar_cfg')) || DEFAULT_CONFIG;
+
+    function parseLocalDate(yyyyMmDd) {
+      const [y, m, d] = yyyyMmDd.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getWeekRange(weekNum) {
+      const start = parseLocalDate(calendarConfig.w1StartDate);
+      start.setDate(start.getDate() + ((weekNum - 1) * 7));
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
 
     function getWeekLabel(weekNum) {
-      let start = new Date(W5_START_DATE);
-      start.setDate(start.getDate() + ((weekNum - 5) * 7));
-      let end = new Date(start);
-      end.setDate(end.getDate() + 6);
+      const { start, end } = getWeekRange(weekNum);
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      let sMonth = months[start.getMonth()], sDate = start.getDate();
-      let eMonth = months[end.getMonth()], eDate = end.getDate();
+      const sMonth = months[start.getMonth()], sDate = start.getDate();
+      const eMonth = months[end.getMonth()], eDate = end.getDate();
       return sMonth === eMonth ? `${sMonth} ${sDate}-${eDate}` : `${sMonth} ${sDate}-${eMonth} ${eDate}`;
     }
 
-    // --- Initial Data ---
+    function isWeekCurrent(weekNum) {
+      const today = new Date();
+      const { start, end } = getWeekRange(weekNum);
+      return today >= start && today <= end;
+    }
+
+    function updateCalendarConfig() {
+      const dateVal = document.getElementById('w1StartDateInput').value;
+      let weeksVal = parseInt(document.getElementById('totalWeeksInput').value, 10);
+
+      if (dateVal) calendarConfig.w1StartDate = dateVal;
+      if (!isNaN(weeksVal) && weeksVal >= 6 && weeksVal <= 52) {
+        calendarConfig.totalWeeks = weeksVal;
+      }
+
+      localStorage.setItem('black_swan_calendar_cfg', JSON.stringify(calendarConfig));
+      initCalendarControls();
+      renderHeaders();
+      renderApp();
+      showToast('Calendar timeline updated.');
+    }
+
+    function initCalendarControls() {
+      document.getElementById('w1StartDateInput').value = calendarConfig.w1StartDate;
+      document.getElementById('totalWeeksInput').value = calendarConfig.totalWeeks;
+      document.getElementById('mStartWeek').max = calendarConfig.totalWeeks;
+      document.getElementById('mEndWeek').max = calendarConfig.totalWeeks;
+      document.getElementById('lblStartWeek').textContent = `Start (W1-${calendarConfig.totalWeeks})`;
+      document.getElementById('lblEndWeek').textContent = `End (W1-${calendarConfig.totalWeeks})`;
+
+      const filterWeekEl = document.getElementById('filterWeek');
+      const currentSelection = filterWeekEl.value || 'ALL';
+      let optionsHtml = `<option value="ALL">All Timeline Weeks (W1–W${calendarConfig.totalWeeks})</option>`;
+      for (let w = 1; w <= calendarConfig.totalWeeks; w++) {
+        const nowTag = isWeekCurrent(w) ? ' ★ NOW' : '';
+        optionsHtml += `<option value="${w}">Week ${w} (${getWeekLabel(w)})${nowTag}</option>`;
+      }
+      filterWeekEl.innerHTML = optionsHtml;
+      filterWeekEl.value = (currentSelection !== 'ALL' && parseInt(currentSelection) > calendarConfig.totalWeeks) ? 'ALL' : currentSelection;
+    }
+
+    function scrollToCurrentWeek() {
+      const currentHeader = document.querySelector('.current-week-header');
+      if (currentHeader) {
+        currentHeader.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        showToast('Scrolled to current week.');
+      } else {
+        showToast('Today falls outside the configured project weeks.', 'error');
+      }
+    }
+
+    // --- Initial Tasks Data ---
     const INITIAL_TASKS = [
       { id: '1', title: 'SOC Tier 1/2 research & Hybrid Neuro-Symbolic AI architecture', member: 'Ahmed Elbialy', startWeek: 1, endWeek: 2, status: 'Done', priority: 'High', notes: 'Reference QRadar docs and baseline AI scoring model.' },
       { id: '2', title: 'Project scope definition & QRadar architectural study', member: 'Mohamed Abdelhay', startWeek: 1, endWeek: 1, status: 'Done', priority: 'Medium', notes: '' },
@@ -436,20 +636,16 @@
     ];
 
     let tasks = JSON.parse(localStorage.getItem('black_swan_tasks_v3')) || INITIAL_TASKS;
-
-    // Default missing fields for backward compatibility with v2 storage
     tasks = tasks.map(t => ({...t, priority: t.priority || 'Medium', notes: t.notes || ''}));
 
     let sortColumn = null;
     let sortDesc = false;
 
-    // --- State Management ---
     function saveState() {
       localStorage.setItem('black_swan_tasks_v3', JSON.stringify(tasks));
       renderApp();
     }
 
-    // --- Notifications & Tooltips ---
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
@@ -499,7 +695,6 @@
       setTimeout(() => { el.style.display = 'none'; }, 300);
     }
 
-    // --- Interactive Actions ---
     function toggleSort(col) {
       if (sortColumn === col) { sortDesc = !sortDesc; } 
       else { sortColumn = col; sortDesc = false; }
@@ -524,18 +719,28 @@
       saveState();
     }
 
+    // Only moves Planned tasks on double-click; Done/Partial/Verify bars stay locked on the grid
     function quickMoveTask(id, targetStartWeek) {
+      const targetTask = tasks.find(t => t.id === id);
+      if (!targetTask) return;
+
+      if (targetTask.status !== 'Planned') {
+        showToast(`${targetTask.status} tasks are locked on the timeline. Use the Edit button (✎) to change weeks.`, 'error');
+        return;
+      }
+
+      const maxW = calendarConfig.totalWeeks;
       tasks = tasks.map(t => {
         if (t.id === id) {
           const duration = t.endWeek - t.startWeek;
           let newEnd = targetStartWeek + duration;
-          if (newEnd > TOTAL_WEEKS) newEnd = TOTAL_WEEKS; 
+          if (newEnd > maxW) newEnd = maxW;
           return { ...t, startWeek: targetStartWeek, endWeek: newEnd };
         }
         return t;
       });
       saveState();
-      showToast(`Task moved to start at Week ${targetStartWeek}`);
+      showToast(`Planned task moved to Week ${targetStartWeek} (${getWeekLabel(targetStartWeek)})`);
     }
 
     function deleteTask(id) {
@@ -555,7 +760,6 @@
       });
     }
 
-    // --- Modal Logic ---
     function openTaskModal(taskId = null) {
       const isEdit = taskId !== null;
       document.getElementById('modalTitle').textContent = isEdit ? 'Edit Task' : 'Add New Task';
@@ -582,6 +786,7 @@
     }
 
     function saveTaskModal() {
+      const maxW = calendarConfig.totalWeeks;
       const id = document.getElementById('mTaskId').value;
       const title = document.getElementById('mTaskTitle').value.trim();
       const member = document.getElementById('mMember').value;
@@ -592,7 +797,7 @@
       const notes = document.getElementById('mNotes').value.trim();
 
       if (!title) return showToast('Please enter a task title.', 'error');
-      if (startWeek < 1 || startWeek > TOTAL_WEEKS || endWeek < 1 || endWeek > TOTAL_WEEKS) return showToast('Weeks must be 1-14.', 'error');
+      if (startWeek < 1 || startWeek > maxW || endWeek < 1 || endWeek > maxW) return showToast(`Weeks must be between 1 and ${maxW}.`, 'error');
       if (startWeek > endWeek) return showToast('Start week cannot be after end week.', 'error');
 
       if (id) {
@@ -607,7 +812,6 @@
       saveState();
     }
 
-    // --- Inline Editing ---
     let editingCell = null;
     function startInlineEdit(taskId, field) {
       if (editingCell) finishInlineEdit(editingCell.taskId, editingCell.field, true);
@@ -618,7 +822,7 @@
       inputEl.style.display = 'inline-block';
       inputEl.focus();
       
-      if(field === 'title') inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length;
+      if (field === 'title') inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length;
       editingCell = { taskId, field };
     }
 
@@ -640,28 +844,30 @@
       editingCell = null;
     }
 
-    // --- Rendering Logic ---
     function renderHeaders() {
       const getIcon = (col) => sortColumn === col ? (sortDesc ? '↓' : '↑') : '';
       let headerHtml = `
-        <th style="width: 280px;">
+        <th class="col-task">
           <span class="sortable" onclick="toggleSort('title')">Task / Deliverable <span class="sort-icon">${getIcon('title')}</span></span>
         </th>
-        <th style="width: 140px;">
+        <th class="col-member">
           <span class="sortable" onclick="toggleSort('member')">Member <span class="sort-icon">${getIcon('member')}</span></span>
         </th>
-        <th style="width: 100px;">
+        <th class="col-status">
           <span class="sortable" onclick="toggleSort('status')">Status <span class="sort-icon">${getIcon('status')}</span></span>
         </th>
       `;
-      for (let w = 1; w <= TOTAL_WEEKS; w++) {
-        let isPlan = w >= 5 ? '(Plan)' : '';
+      for (let w = 1; w <= calendarConfig.totalWeeks; w++) {
+        const isCurrent = isWeekCurrent(w);
+        const colClass = isCurrent ? 'week-col current-week-header' : 'week-col';
+        const nowBadge = isCurrent ? '<span class="now-badge">NOW</span>' : '';
         headerHtml += `
-          <th class="week-col">W${w} ${isPlan}<br>
-            <span style="font-size:9px; color:var(--text-muted); font-weight:normal;">${getWeekLabel(w)}</span>
+          <th class="${colClass}">
+            <span class="week-header-title">W${w}${nowBadge}</span>
+            <span class="week-header-sub">${getWeekLabel(w)}</span>
           </th>`;
       }
-      headerHtml += `<th style="width: 90px; text-align: center;">Actions</th>`;
+      headerHtml += `<th style="width: 86px; text-align: center;">Actions</th>`;
       document.getElementById('ganttHeaderRow').innerHTML = headerHtml;
     }
 
@@ -671,12 +877,11 @@
       const statusFilter = document.getElementById('filterStatus').value;
       const query = document.getElementById('searchInput').value.toLowerCase();
 
-      // Filter
       let filtered = tasks.filter(t => {
         const matchMem = memberFilter === 'ALL' || t.member === memberFilter;
         let matchWeek = true;
         if (weekFilter !== 'ALL') {
-          const w = parseInt(weekFilter);
+          const w = parseInt(weekFilter, 10);
           matchWeek = (w >= t.startWeek && w <= t.endWeek);
         }
         const matchStatus = statusFilter === 'ALL' || t.status === statusFilter || 
@@ -685,7 +890,6 @@
         return matchMem && matchWeek && matchStatus && matchQuery;
       });
 
-      // Sort
       if (sortColumn) {
         filtered.sort((a, b) => {
           let valA = (a[sortColumn] || '').toString().toLowerCase();
@@ -696,7 +900,6 @@
         });
       }
 
-      // Update KPIs
       const total = tasks.length;
       const done = tasks.filter(t => t.status === 'Done').length;
       const pending = tasks.filter(t => t.status === 'Verify' || t.status === 'Partial').length;
@@ -709,16 +912,15 @@
       document.getElementById('kpi-planned').textContent = planned;
       document.getElementById('kpi-rate').textContent = `${rate}%`;
 
-      // Render Table
       const tbody = document.getElementById('tasksTbody');
       tbody.innerHTML = '';
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${3 + TOTAL_WEEKS + 1}" style="text-align:center; padding: 32px; color: var(--text-muted);">No tasks match the current filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${3 + calendarConfig.totalWeeks + 1}" style="text-align:center; padding: 32px; color: var(--text-muted);">No tasks match the current filters.</td></tr>`;
         return;
       }
 
-      const memberOptions = ['Ahmed Elbialy', 'Mohamed Abdelhay', 'Abdulrahman Fawaz', 'Ahmed Abdo'];
+      const memberOptions = ['Ahmed Elbialy', 'Eng. Nesma', 'Mohamed Abdelhay', 'Abdulrahman Fawaz', 'Ahmed Abdo'];
 
       filtered.forEach(task => {
         const tr = document.createElement('tr');
@@ -730,7 +932,7 @@
         else if (task.status === 'Verify') { statusClass = 'status-verify'; barClass = 'bar-verify'; }
 
         const prio = task.priority || 'Medium';
-        let prioBadgeHtml = `<span class="priority-badge p-${prio.toLowerCase()}" title="${prio} Priority">${prio.charAt(0)}</span>`;
+        const prioBadgeHtml = `<span class="priority-badge p-${prio.toLowerCase()}" title="${prio} Priority">${prio.charAt(0)}</span>`;
 
         let notesIconHtml = '';
         if (task.notes && task.notes.trim() !== '') {
@@ -743,48 +945,66 @@
         memberSelectHtml += `</select>`;
 
         let html = `
-          <td>
+          <td class="col-task">
             <div class="editable-cell">
               ${prioBadgeHtml}
-              <strong class="editable-text" id="title-text-${task.id}" onclick="startInlineEdit('${task.id}', 'title')">${task.title}</strong>
+              <strong class="editable-text" id="title-text-${task.id}" onclick="startInlineEdit('${task.id}', 'title')" title="${task.title}">${task.title}</strong>
               ${notesIconHtml}
-              <input type="text" id="title-input-${task.id}" class="inline-input" style="display:none;" value="${task.title}" 
+              <input type="text" id="title-input-${task.id}" class="inline-input" style="display:none;" value="${task.title.replace(/"/g, '&quot;')}" 
                      onblur="finishInlineEdit('${task.id}', 'title')" onkeydown="if(event.key==='Enter') this.blur();">
             </div>
           </td>
-          <td style="color: var(--text-muted); font-size: 12px;">
+          <td class="col-member" style="color: var(--text-muted); font-size: 12px;">
              <div class="editable-cell">
               <span class="editable-text" id="member-text-${task.id}" onclick="startInlineEdit('${task.id}', 'member')">${task.member}</span>
               ${memberSelectHtml}
             </div>
           </td>
-          <td>
+          <td class="col-status">
             <span class="status-pill ${statusClass}" onclick="cycleStatus('${task.id}')" title="Click to cycle status">${task.status}</span>
           </td>
         `;
 
         let w = 1;
-        while (w <= TOTAL_WEEKS) {
-          if (w === task.startWeek) {
-            let span = task.endWeek - task.startWeek + 1;
+        const maxW = calendarConfig.totalWeeks;
+        const clampedStart = Math.min(Math.max(1, task.startWeek), maxW);
+        const clampedEnd = Math.min(Math.max(clampedStart, task.endWeek), maxW);
+        const isMovable = task.status === 'Planned';
+
+        while (w <= maxW) {
+          if (w === clampedStart) {
+            const span = clampedEnd - clampedStart + 1;
+            let spansCurrent = false;
+            for (let checkW = clampedStart; checkW <= clampedEnd; checkW++) {
+              if (isWeekCurrent(checkW)) spansCurrent = true;
+            }
+            const cellHighlight = spansCurrent ? 'current-week-cell' : '';
+
             html += `
-              <td colspan="${span}" class="gantt-bar-cell">
-                <div class="timeline-bar ${barClass}" onclick="openTaskModal('${task.id}')" title="Edit ${task.title}">
+              <td colspan="${span}" class="gantt-bar-cell ${cellHighlight}">
+                <div class="timeline-bar ${barClass}" onclick="openTaskModal('${task.id}')" title="${task.title} | W${clampedStart} (${getWeekLabel(clampedStart)}) to W${clampedEnd} (${getWeekLabel(clampedEnd)})">
                   ${task.status}
                 </div>
               </td>
             `;
-            w = task.endWeek + 1;
+            w = clampedEnd + 1;
           } else {
-            html += `<td class="empty-cell" onclick="quickMoveTask('${task.id}', ${w})" title="Move start to Week ${w}">·</td>`;
+            const cellHighlight = isWeekCurrent(w) ? 'current-week-cell' : '';
+            if (isMovable) {
+              html += `<td class="empty-cell movable ${cellHighlight}" ondblclick="quickMoveTask('${task.id}', ${w})" title="Double-click to move Planned task to Week ${w} (${getWeekLabel(w)})">·</td>`;
+            } else {
+              html += `<td class="empty-cell locked ${cellHighlight}">·</td>`;
+            }
             w++;
           }
         }
 
         html += `
-          <td style="text-align: center; display: flex; gap: 4px; justify-content: center;">
-            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openTaskModal('${task.id}')" title="Edit">✎</button>
-            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteTask('${task.id}')" title="Delete">✕</button>
+          <td style="text-align: center;">
+            <div style="display: inline-flex; gap: 4px;">
+              <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="openTaskModal('${task.id}')" title="Edit">✎</button>
+              <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteTask('${task.id}')" title="Delete">✕</button>
+            </div>
           </td>
         `;
         tr.innerHTML = html;
@@ -792,7 +1012,6 @@
       });
     }
 
-    // --- Import / Export ---
     function exportData() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
       const a = document.createElement('a');
@@ -802,7 +1021,7 @@
     }
 
     function exportCSV() {
-      const headers = ['ID', 'Task Title', 'Assigned Member', 'Status', 'Priority', 'Start Week', 'End Week', 'Notes'];
+      const headers = ['ID', 'Task Title', 'Assigned Member', 'Status', 'Priority', 'Start Week', 'End Week', 'Date Range', 'Notes'];
       const rows = tasks.map(t => [
         t.id,
         `"${t.title.replace(/"/g, '""')}"`,
@@ -811,6 +1030,7 @@
         t.priority || 'Medium',
         t.startWeek,
         t.endWeek,
+        `"${getWeekLabel(t.startWeek)} to ${getWeekLabel(t.endWeek)}"`,
         `"${(t.notes || '').replace(/"/g, '""')}"`
       ]);
       const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -844,7 +1064,7 @@
       event.target.value = '';
     }
 
-    // --- Init ---
+    initCalendarControls();
     renderHeaders();
     renderApp();
   </script>
