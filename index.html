@@ -7,6 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --bg: #0b0f17;
@@ -35,7 +40,6 @@
 
     .container { max-width: 1600px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 
-    /* Header */
     header {
       background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(30, 41, 59, 0.7));
       border: 1px solid var(--card-border);
@@ -55,7 +59,6 @@
     .badge strong { color: var(--text); }
     .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-    /* Buttons */
     .btn { font-family: inherit; font-weight: 600; font-size: 13px; padding: 9px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
     .btn-primary { background: #0284c7; color: #fff; }
     .btn-primary:hover { background: #0369a1; }
@@ -64,7 +67,6 @@
     .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
     .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
 
-    /* Team Cards */
     .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
     .team-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
     .team-card-title { font-size: 15px; font-weight: 700; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
@@ -72,7 +74,6 @@
     .team-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
     .tag { font-size: 11px; background: rgba(255,255,255,0.04); padding: 3px 8px; border-radius: 4px; color: var(--text-muted); }
 
-    /* KPI Summary */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
     .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px 20px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; }
     .kpi-card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.2); background: var(--surface-hover); }
@@ -81,7 +82,6 @@
     .kpi-hint { position: absolute; top: 16px; right: 20px; font-size: 10px; color: rgba(255,255,255,0.2); opacity: 0; transition: opacity 0.2s; }
     .kpi-card:hover .kpi-hint { opacity: 1; }
 
-    /* Filters Bar */
     .toolbar { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 20px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
     .filter-group { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     select, input[type="text"], input[type="number"], input[type="date"], textarea.modal-input {
@@ -91,7 +91,6 @@
     textarea.modal-input { width: 100%; resize: vertical; min-height: 70px; }
     select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, textarea.modal-input:focus { border-color: var(--primary); }
 
-    /* Gantt & Table Wrapper */
     .view-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .view-header { padding: 18px 24px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
     .view-header-left { display: flex; flex-direction: column; gap: 4px; }
@@ -102,12 +101,10 @@
     .control-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); font-weight: 600; }
     .control-item input { padding: 5px 8px; font-size: 12px; }
 
-    /* Sortable Headers */
     .sortable { cursor: pointer; user-select: none; transition: color 0.2s; display: inline-flex; align-items: center; }
     .sortable:hover { color: var(--text); }
     .sort-icon { display: inline-block; width: 14px; margin-left: 4px; font-size: 14px; font-family: sans-serif; color: var(--primary); }
 
-    /* Calendar / Gantt Visual Grid */
     .gantt-container { overflow-x: auto; padding: 16px 20px 24px; scroll-behavior: smooth; }
     .gantt-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 1450px; table-layout: fixed; }
     
@@ -125,98 +122,35 @@
       border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    /* Sticky Left Columns (Task, Member, Status stay locked together on scroll) */
     .col-task { width: 280px; min-width: 280px; }
     .col-member { width: 145px; min-width: 145px; }
     .col-status { width: 105px; min-width: 105px; }
 
     @media (min-width: 960px) {
-      .gantt-table th.col-task,
-      .gantt-row td.col-task {
-        position: sticky;
-        left: 0;
-        z-index: 20;
-      }
-      .gantt-table th.col-member,
-      .gantt-row td.col-member {
-        position: sticky;
-        left: 280px;
-        z-index: 20;
-      }
-      .gantt-table th.col-status,
-      .gantt-row td.col-status {
-        position: sticky;
-        left: 425px;
-        z-index: 20;
-        box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4);
-        border-right: 1px solid var(--card-border);
-      }
+      .gantt-table th.col-task, .gantt-row td.col-task { position: sticky; left: 0; z-index: 20; }
+      .gantt-table th.col-member, .gantt-row td.col-member { position: sticky; left: 280px; z-index: 20; }
+      .gantt-table th.col-status, .gantt-row td.col-status { position: sticky; left: 425px; z-index: 20; box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4); border-right: 1px solid var(--card-border); }
     }
 
-    .gantt-table th:first-child { 
-      text-align: left; 
-      padding-left: 16px; 
-      border-top-left-radius: 8px; 
-      border-bottom-left-radius: 8px; 
-      border-left: 1px solid var(--card-border);
-    }
+    .gantt-table th:first-child { text-align: left; padding-left: 16px; border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-left: 1px solid var(--card-border); }
     .gantt-table th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-right: 1px solid var(--card-border); }
-    
     .gantt-table th.week-col { width: 66px; transition: background 0.2s; }
     
     .week-header-title { font-weight: 700; color: var(--primary); font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 2px; }
     .week-header-sub { font-size: 9px; color: var(--text-muted); display: block; font-weight: normal; letter-spacing: -0.3px; }
 
-    /* Current Week Highlighting */
-    .current-week-header {
-      background: rgba(56, 189, 248, 0.14) !important;
-      border-top: 2px solid var(--primary) !important;
-      border-bottom: 1px solid var(--primary) !important;
-    }
-    .current-week-cell {
-      background: rgba(56, 189, 248, 0.06) !important;
-      border-left: 1px dashed rgba(56, 189, 248, 0.35) !important;
-      border-right: 1px dashed rgba(56, 189, 248, 0.35) !important;
-    }
-    .now-badge {
-      background: var(--primary);
-      color: #0b0f17;
-      font-size: 8px;
-      font-weight: 800;
-      padding: 1px 4px;
-      border-radius: 3px;
-      line-height: 1.2;
-    }
+    .current-week-header { background: rgba(56, 189, 248, 0.14) !important; border-top: 2px solid var(--primary) !important; border-bottom: 1px solid var(--primary) !important; }
+    .current-week-cell { background: rgba(56, 189, 248, 0.06) !important; border-left: 1px dashed rgba(56, 189, 248, 0.35) !important; border-right: 1px dashed rgba(56, 189, 248, 0.35) !important; }
+    .now-badge { background: var(--primary); color: #0b0f17; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 3px; line-height: 1.2; }
 
     .gantt-row { background: rgba(255, 255, 255, 0.015); transition: background 0.15s; }
     .gantt-row:hover { background: var(--surface-hover); }
-    .gantt-row td { 
-      padding: 8px 6px; 
-      font-size: 13px; 
-      border-top: 1px solid rgba(255,255,255,0.03); 
-      border-bottom: 1px solid rgba(255,255,255,0.03); 
-      border-right: 1px solid rgba(255,255,255,0.04);
-      position: relative; 
-      vertical-align: middle; 
-    }
-    .gantt-row td.col-task,
-    .gantt-row td.col-member,
-    .gantt-row td.col-status {
-      background: #131b2e;
-    }
-    .gantt-row:hover td.col-task,
-    .gantt-row:hover td.col-member,
-    .gantt-row:hover td.col-status {
-      background: var(--surface-hover);
-    }
-    .gantt-row td:first-child { 
-      border-left: 1px solid rgba(255,255,255,0.03); 
-      border-radius: 8px 0 0 8px; 
-      padding-left: 16px;
-    }
+    .gantt-row td { padding: 8px 6px; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.04); position: relative; vertical-align: middle; }
+    .gantt-row td.col-task, .gantt-row td.col-member, .gantt-row td.col-status { background: #131b2e; }
+    .gantt-row:hover td.col-task, .gantt-row:hover td.col-member, .gantt-row:hover td.col-status { background: var(--surface-hover); }
+    .gantt-row td:first-child { border-left: 1px solid rgba(255,255,255,0.03); border-radius: 8px 0 0 8px; padding-left: 16px; }
     .gantt-row td:last-child { border-right: 1px solid rgba(255,255,255,0.03); border-radius: 0 8px 8px 0; padding-right: 12px; text-align: center; }
 
-    /* Editable Fields & Priorities */
     .editable-cell { display: flex; align-items: center; flex-wrap: nowrap; gap: 6px; padding: 2px 4px; border-radius: 4px; transition: background 0.2s; min-height: 32px; }
     .editable-text { cursor: pointer; border-bottom: 1px dashed transparent; transition: border 0.2s, color 0.2s; overflow: hidden; text-overflow: ellipsis; }
     .editable-text:hover { border-bottom: 1px dashed var(--text-muted); color: var(--primary); }
@@ -230,11 +164,9 @@
     .note-icon { cursor: help; font-size: 14px; user-select: none; transition: transform 0.2s; flex-shrink: 0; }
     .note-icon:hover { transform: scale(1.2); }
 
-    /* Global Tooltip */
     .custom-tooltip { position: fixed; background: #1e293b; color: #e2e8f0; padding: 10px 14px; border-radius: 8px; font-size: 12px; max-width: 280px; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.2s; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.6); white-space: pre-wrap; word-wrap: break-word; line-height: 1.5; }
     .custom-tooltip.show { opacity: 1; }
 
-    /* Status Pills */
     .status-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; border: 1px solid transparent; transition: transform 0.15s; }
     .status-pill:hover { transform: scale(1.05); }
     .status-done { background: rgba(16, 185, 129, 0.15); color: var(--done); border-color: rgba(16, 185, 129, 0.3); }
@@ -242,28 +174,9 @@
     .status-verify { background: rgba(139, 92, 246, 0.15); color: var(--verify); border-color: rgba(139, 92, 246, 0.3); }
     .status-planned { background: rgba(100, 116, 139, 0.15); color: var(--planned); border-color: rgba(100, 116, 139, 0.3); }
 
-    /* Clean Static Timeline Bar (No shifting buttons inside) */
     .gantt-bar-cell { padding: 3px 2px !important; }
-    .timeline-bar { 
-      height: 28px; 
-      border-radius: 6px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      padding: 0 6px;
-      font-size: 11px; 
-      font-weight: 700; 
-      color: #fff; 
-      position: relative; 
-      overflow: hidden; 
-      white-space: nowrap; 
-      text-overflow: ellipsis;
-      cursor: pointer;
-      user-select: none;
-      transition: filter 0.15s;
-    }
+    .timeline-bar { height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 0 6px; font-size: 11px; font-weight: 700; color: #fff; position: relative; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; user-select: none; transition: filter 0.15s; }
     .timeline-bar:hover { filter: brightness(1.08); }
-
     .bar-done { background: var(--done); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
     .bar-partial { background: var(--partial); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
     .bar-verify { background: var(--verify); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
@@ -274,7 +187,6 @@
     .empty-cell.movable:hover { color: var(--primary); background: rgba(56, 189, 248, 0.1) !important; }
     .empty-cell.locked { cursor: default; }
 
-    /* Modals */
     .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; padding: 16px; opacity: 0; transition: opacity 0.3s ease; }
     .modal-backdrop.show { opacity: 1; }
     .modal { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; width: 100%; max-width: 540px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); transform: translateY(-20px); transition: transform 0.3s ease; }
@@ -286,7 +198,6 @@
     .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
-    /* Toast Notifications */
     .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
     .toast { background: var(--card-bg); border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-size: 13px; font-weight: 600; animation: slideIn 0.3s ease forwards; opacity: 0; transform: translateX(100%); }
     .toast.success { border-left-color: var(--done); }
@@ -298,7 +209,6 @@
 <body>
 
   <div class="container">
-    <!-- Header -->
     <header>
       <div class="brand">
         <h1><span>TEAM BLACK SWAN</span> | <span>ARES</span> | G-04</h1>
@@ -318,7 +228,6 @@
       </div>
     </header>
 
-    <!-- Team Members Overview -->
     <div class="team-grid">
       <div class="team-card">
         <div class="team-card-title">
@@ -354,7 +263,6 @@
       </div>
     </div>
 
-    <!-- KPIs (Interactive) -->
     <div class="kpi-grid">
       <div class="kpi-card" onclick="setFilterFromKPI('ALL')">
         <span class="kpi-hint">Click to Reset</span>
@@ -383,7 +291,6 @@
       </div>
     </div>
 
-    <!-- Filters Toolbar -->
     <div class="toolbar">
       <div class="filter-group">
         <select id="filterMember" onchange="renderApp()">
@@ -394,9 +301,7 @@
           <option value="Abdulrahman Fawaz">Abdulrahman Fawaz</option>
           <option value="Ahmed Abdo">Ahmed Abdo</option>
         </select>
-        <select id="filterWeek" onchange="renderApp()">
-          <!-- Dynamically populated -->
-        </select>
+        <select id="filterWeek" onchange="renderApp()"></select>
         <select id="filterStatus" onchange="renderApp()">
           <option value="ALL">All Statuses</option>
           <option value="Done">Done</option>
@@ -411,7 +316,6 @@
       </div>
     </div>
 
-    <!-- Gantt View -->
     <div class="view-card">
       <div class="view-header">
         <div class="view-header-left">
@@ -437,19 +341,15 @@
       <div class="gantt-container" id="ganttScrollContainer">
         <table class="gantt-table">
           <thead>
-            <tr id="ganttHeaderRow">
-              <!-- Dynamically populated -->
-            </tr>
+            <tr id="ganttHeaderRow"></tr>
           </thead>
-          <tbody id="tasksTbody">
-            <!-- Dynamically populated -->
-          </tbody>
+          <tbody id="tasksTbody"></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- Task Edit/Add Modal -->
+  <!-- Task Modal -->
   <div class="modal-backdrop" id="taskModal">
     <div class="modal">
       <div class="modal-header">
@@ -513,7 +413,7 @@
     </div>
   </div>
 
-  <!-- Custom Confirm Modal -->
+  <!-- Confirm Modal -->
   <div class="modal-backdrop" id="confirmModal">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
@@ -527,19 +427,99 @@
     </div>
   </div>
 
-  <!-- Toast & Tooltip Containers -->
   <div class="toast-container" id="toastContainer"></div>
   <div id="globalTooltip" class="custom-tooltip"></div>
 
   <script>
-    // --- Dynamic Calendar Configuration ---
+    // --- 1. FIREBASE REALTIME DATABASE CONFIGURATION ---
+    const firebaseConfig = {
+      apiKey: "PASTE_YOUR_API_KEY_HERE",
+      authDomain: "blackjackswan.firebaseapp.com",
+      databaseURL: "https://blackjackswan-default-rtdb.firebaseio.com", 
+      projectId: "blackjackswan",
+      storageBucket: "blackjackswan.firebasestorage.app",
+      messagingSenderId: "1001329669007",
+      appId: "PASTE_YOUR_APP_ID_HERE"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const appDataRef = db.ref('ares_tracker_data');
+
+    // --- Baseline Configurations ---
     const DEFAULT_CONFIG = {
       w1StartDate: '2026-09-19',
       totalWeeks: 18
     };
 
-    let calendarConfig = JSON.parse(localStorage.getItem('black_swan_calendar_cfg')) || DEFAULT_CONFIG;
+    const INITIAL_TASKS = [
+      { id: '1', title: 'SOC Tier 1/2 research & Hybrid Neuro-Symbolic AI architecture', member: 'Ahmed Elbialy', startWeek: 1, endWeek: 2, status: 'Done', priority: 'High', notes: 'Reference QRadar docs and baseline AI scoring model.' },
+      { id: '2', title: 'Project scope definition & QRadar architectural study', member: 'Mohamed Abdelhay', startWeek: 1, endWeek: 1, status: 'Done', priority: 'Medium', notes: '' },
+      { id: '3', title: 'Documentation baseline & project specs', member: 'Abdulrahman Fawaz', startWeek: 1, endWeek: 2, status: 'Done', priority: 'Low', notes: '' },
+      { id: '4', title: 'Initial malware analysis toolchain setup & scoping', member: 'Ahmed Abdo', startWeek: 1, endWeek: 1, status: 'Done', priority: 'Medium', notes: 'Set up FlareVM instance.' },
+      { id: '5', title: 'C2 beaconing & DNS tunneling algorithms mapping', member: 'Ahmed Elbialy', startWeek: 2, endWeek: 3, status: 'Done', priority: 'High', notes: '' },
+      { id: '6', title: 'Honeypot environment deployment (T-Pot baseline)', member: 'Mohamed Abdelhay', startWeek: 2, endWeek: 3, status: 'Done', priority: 'High', notes: 'Deploy on isolated VLAN.' },
+      { id: '7', title: 'Central AI coordinator (brain.py) & threat-scoring', member: 'Ahmed Elbialy', startWeek: 3, endWeek: 4, status: 'Done', priority: 'High', notes: '' },
+      { id: '8', title: 'React-based SIEM dashboard modules design', member: 'Mohamed Abdelhay', startWeek: 3, endWeek: 4, status: 'Verify', priority: 'Medium', notes: 'Ensure glassmorphism UI matches mockups.' },
+      { id: '9', title: 'VMware & GNS3 VM setup, Ubuntu OS deploy', member: 'Abdulrahman Fawaz', startWeek: 3, endWeek: 3, status: 'Done', priority: 'Medium', notes: '' },
+      { id: '10', title: 'Interactive CLI (cli/main.py) & PCAP generator', member: 'Ahmed Elbialy', startWeek: 4, endWeek: 4, status: 'Done', priority: 'Low', notes: '' },
+      { id: '11', title: 'GNS3/VMware network adapter bridges config', member: 'Abdulrahman Fawaz', startWeek: 4, endWeek: 5, status: 'Partial', priority: 'High', notes: 'Bridge issue with VMnet8 needs debugging.' },
+      { id: '12', title: 'Threat Intelligence APIs (AbuseIPDB/VT) integration', member: 'Ahmed Elbialy', startWeek: 5, endWeek: 6, status: 'Planned', priority: 'Medium', notes: 'Need to secure API keys.' },
+      { id: '13', title: 'Interactive MITRE ATT&CK matrix overlay build', member: 'Mohamed Abdelhay', startWeek: 5, endWeek: 7, status: 'Planned', priority: 'High', notes: '' },
+      { id: '14', title: 'Dynamic sandbox prep & live behavior logging', member: 'Ahmed Abdo', startWeek: 5, endWeek: 6, status: 'Planned', priority: 'High', notes: 'Isolate from host completely.' }
+    ];
 
+    let calendarConfig = DEFAULT_CONFIG;
+    let tasks = [];
+    let isInitialLoad = true;
+
+    // --- 2. REAL-TIME DATA SYNC LISTENER ---
+    appDataRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        if (data.tasks) {
+          tasks = Array.isArray(data.tasks) ? data.tasks : Object.values(data.tasks);
+          tasks = tasks.map(t => ({ ...t, priority: t.priority || 'Medium', notes: t.notes || '' }));
+        } else {
+          tasks = [];
+        }
+
+        if (data.calendarConfig) {
+          calendarConfig = data.calendarConfig;
+          initCalendarControls();
+          renderHeaders();
+        }
+      } else {
+        // First initialization in empty database
+        tasks = INITIAL_TASKS;
+        calendarConfig = DEFAULT_CONFIG;
+        saveState();
+      }
+
+      renderApp();
+
+      if (!isInitialLoad) {
+        showToast('Database synced');
+      }
+      isInitialLoad = false;
+    }, (error) => {
+      console.error('Firebase read error:', error);
+      showToast('Firebase permission error - check rules', 'error');
+    });
+
+    // --- 3. LIVE SAVE TO FIREBASE ---
+    function saveState() {
+      renderApp(); // Render immediately on screen
+      appDataRef.set({
+        tasks: tasks,
+        calendarConfig: calendarConfig
+      }).catch(err => {
+        console.error('Firebase write error:', err);
+        showToast('Failed to sync changes: ' + err.message, 'error');
+      });
+    }
+
+    // --- Calendar Math ---
     function parseLocalDate(yyyyMmDd) {
       const [y, m, d] = yyyyMmDd.split('-').map(Number);
       return new Date(y, m - 1, d);
@@ -577,11 +557,10 @@
         calendarConfig.totalWeeks = weeksVal;
       }
 
-      localStorage.setItem('black_swan_calendar_cfg', JSON.stringify(calendarConfig));
       initCalendarControls();
       renderHeaders();
-      renderApp();
-      showToast('Calendar timeline updated.');
+      saveState();
+      showToast('Calendar updated across devices.');
     }
 
     function initCalendarControls() {
@@ -609,42 +588,12 @@
         currentHeader.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         showToast('Scrolled to current week.');
       } else {
-        showToast('Today falls outside the configured project weeks.', 'error');
+        showToast('Today falls outside the project weeks.', 'error');
       }
     }
 
-    // --- Initial Tasks Data ---
-    const INITIAL_TASKS = [
-      { id: '1', title: 'SOC Tier 1/2 research & Hybrid Neuro-Symbolic AI architecture', member: 'Ahmed Elbialy', startWeek: 1, endWeek: 2, status: 'Done', priority: 'High', notes: 'Reference QRadar docs and baseline AI scoring model.' },
-      { id: '2', title: 'Project scope definition & QRadar architectural study', member: 'Mohamed Abdelhay', startWeek: 1, endWeek: 1, status: 'Done', priority: 'Medium', notes: '' },
-      { id: '3', title: 'Documentation baseline & project specs', member: 'Abdulrahman Fawaz', startWeek: 1, endWeek: 2, status: 'Done', priority: 'Low', notes: '' },
-      { id: '4', title: 'Initial malware analysis toolchain setup & scoping', member: 'Ahmed Abdo', startWeek: 1, endWeek: 1, status: 'Done', priority: 'Medium', notes: 'Set up FlareVM instance.' },
-      
-      { id: '5', title: 'C2 beaconing & DNS tunneling algorithms mapping', member: 'Ahmed Elbialy', startWeek: 2, endWeek: 3, status: 'Done', priority: 'High', notes: '' },
-      { id: '6', title: 'Honeypot environment deployment (T-Pot baseline)', member: 'Mohamed Abdelhay', startWeek: 2, endWeek: 3, status: 'Done', priority: 'High', notes: 'Deploy on isolated VLAN.' },
-      
-      { id: '7', title: 'Central AI coordinator (brain.py) & threat-scoring', member: 'Ahmed Elbialy', startWeek: 3, endWeek: 4, status: 'Done', priority: 'High', notes: '' },
-      { id: '8', title: 'React-based SIEM dashboard modules design', member: 'Mohamed Abdelhay', startWeek: 3, endWeek: 4, status: 'Verify', priority: 'Medium', notes: 'Ensure glassmorphism UI matches mockups.' },
-      { id: '9', title: 'VMware & GNS3 VM setup, Ubuntu OS deploy', member: 'Abdulrahman Fawaz', startWeek: 3, endWeek: 3, status: 'Done', priority: 'Medium', notes: '' },
-
-      { id: '10', title: 'Interactive CLI (cli/main.py) & PCAP generator', member: 'Ahmed Elbialy', startWeek: 4, endWeek: 4, status: 'Done', priority: 'Low', notes: '' },
-      { id: '11', title: 'GNS3/VMware network adapter bridges config', member: 'Abdulrahman Fawaz', startWeek: 4, endWeek: 5, status: 'Partial', priority: 'High', notes: 'Bridge issue with VMnet8 needs debugging.' },
-
-      { id: '12', title: 'Threat Intelligence APIs (AbuseIPDB/VT) integration', member: 'Ahmed Elbialy', startWeek: 5, endWeek: 6, status: 'Planned', priority: 'Medium', notes: 'Need to secure API keys.' },
-      { id: '13', title: 'Interactive MITRE ATT&CK matrix overlay build', member: 'Mohamed Abdelhay', startWeek: 5, endWeek: 7, status: 'Planned', priority: 'High', notes: '' },
-      { id: '14', title: 'Dynamic sandbox prep & live behavior logging', member: 'Ahmed Abdo', startWeek: 5, endWeek: 6, status: 'Planned', priority: 'High', notes: 'Isolate from host completely.' }
-    ];
-
-    let tasks = JSON.parse(localStorage.getItem('black_swan_tasks_v3')) || INITIAL_TASKS;
-    tasks = tasks.map(t => ({...t, priority: t.priority || 'Medium', notes: t.notes || ''}));
-
     let sortColumn = null;
     let sortDesc = false;
-
-    function saveState() {
-      localStorage.setItem('black_swan_tasks_v3', JSON.stringify(tasks));
-      renderApp();
-    }
 
     function showToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
@@ -705,7 +654,7 @@
     function setFilterFromKPI(statusVal) {
       document.getElementById('filterStatus').value = statusVal;
       renderApp();
-      showToast(`Filter applied: ${statusVal === 'ALL' ? 'View All' : statusVal}`);
+      showToast(`Filter: ${statusVal === 'ALL' ? 'View All' : statusVal}`);
     }
 
     function cycleStatus(id) {
@@ -719,13 +668,12 @@
       saveState();
     }
 
-    // Only moves Planned tasks on double-click; Done/Partial/Verify bars stay locked on the grid
     function quickMoveTask(id, targetStartWeek) {
       const targetTask = tasks.find(t => t.id === id);
       if (!targetTask) return;
 
       if (targetTask.status !== 'Planned') {
-        showToast(`${targetTask.status} tasks are locked on the timeline. Use the Edit button (✎) to change weeks.`, 'error');
+        showToast(`${targetTask.status} tasks are locked. Use Edit (✎) to change weeks.`, 'error');
         return;
       }
 
@@ -740,23 +688,23 @@
         return t;
       });
       saveState();
-      showToast(`Planned task moved to Week ${targetStartWeek} (${getWeekLabel(targetStartWeek)})`);
+      showToast(`Moved to Week ${targetStartWeek}`);
     }
 
     function deleteTask(id) {
-      customConfirm('Are you sure you want to delete this task? This action cannot be undone.', () => {
+      customConfirm('Are you sure you want to delete this task? This synchronizes immediately for everyone.', () => {
         tasks = tasks.filter(t => t.id !== id);
         saveState();
-        showToast('Task deleted successfully', 'success');
+        showToast('Task deleted successfully.');
       });
     }
 
     function clearAllTasks() {
       if (tasks.length === 0) return showToast('No tasks to clear.', 'error');
-      customConfirm('WARNING: Are you absolutely sure you want to CLEAR ALL tasks? This cannot be undone.', () => {
+      customConfirm('WARNING: Are you sure you want to clear all tasks for the entire team?', () => {
         tasks = [];
         saveState();
-        showToast('All tasks have been cleared.', 'success');
+        showToast('All tasks cleared.');
       });
     }
 
@@ -802,10 +750,10 @@
 
       if (id) {
         tasks = tasks.map(t => t.id === id ? { id, title, member, status, priority, startWeek, endWeek, notes } : t);
-        showToast('Task updated successfully.');
+        showToast('Task updated.');
       } else {
         tasks.push({ id: Date.now().toString(), title, member, status, priority, startWeek, endWeek, notes });
-        showToast('Task created successfully.');
+        showToast('Task created.');
       }
       
       closeModal('taskModal');
@@ -1017,7 +965,7 @@
       const a = document.createElement('a');
       a.href = dataStr; a.download = `BLACK_SWAN_Tasks_${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a); a.click(); a.remove();
-      showToast('JSON exported successfully.');
+      showToast('JSON exported.');
     }
 
     function exportCSV() {
@@ -1037,7 +985,7 @@
       const a = document.createElement("a");
       a.href = encodeURI(csvContent); a.download = `BLACK_SWAN_Tasks_${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a); a.click(); a.remove();
-      showToast('CSV exported successfully.');
+      showToast('CSV exported.');
     }
 
     function importData(event) {
@@ -1056,7 +1004,7 @@
               notes: t.notes || ''
             }));
             saveState();
-            showToast('Tasks successfully imported!');
+            showToast('Tasks imported and synced to Firebase!');
           }
         } catch (err) { showToast('Invalid JSON file format.', 'error'); }
       };
@@ -1066,7 +1014,6 @@
 
     initCalendarControls();
     renderHeaders();
-    renderApp();
   </script>
 </body>
 </html>
